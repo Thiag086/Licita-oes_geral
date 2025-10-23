@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pncp-licitacoes"
+version = "1.0.0"
+description = "Script Python para listar licitações do Portal Nacional de Contratações Públicas (PNCP)"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Thiago", email = ""}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.31.0",
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.scripts]
+pncp-licitacoes = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/Thiag086/Licita-oes_geral"
+Repository = "https://github.com/Thiag086/Licita-oes_geral"
+Issues = "https://github.com/Thiag086/Licita-oes_geral/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.txt", "*.yml", "*.yaml", "*.json", "*.sh", "*.example"]
