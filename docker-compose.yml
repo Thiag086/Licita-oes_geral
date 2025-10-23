@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  pncp-licitacoes:
+    build: .
+    container_name: pncp-licitacoes
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --exemplo --excel /app/output/licitacoes.xlsx
+    restart: unless-stopped
+
+  pncp-licitacoes-dev:
+    build: .
+    container_name: pncp-licitacoes-dev
+    volumes:
+      - .:/app
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --help
+    restart: unless-stopped
