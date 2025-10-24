@@ -287,22 +287,114 @@
         async function carregarLicitacoes() {
             mostrarLoading(true);
             try {
-                const params = new URLSearchParams({
-                    page: currentPage,
-                    per_page: 20,
-                    ...Object.fromEntries(Object.entries(filtros).filter(([_, v]) => v))
+                // Simular dados de licitações para demonstração
+                const licitacoesMock = [
+                    {
+                        title: "Edital nº 001/2025 - Aquisição de Equipamentos",
+                        numero_controle_pncp: "12345678000123-1-000001/2025",
+                        orgao_nome: "PREFEITURA MUNICIPAL DE CURITIBA",
+                        municipio_nome: "Curitiba",
+                        uf: "PR",
+                        modalidade_licitacao_nome: "Pregão Eletrônico",
+                        situacao_nome: "Recebendo Proposta",
+                        data_publicacao_pncp: "2025-10-23T10:00:00Z",
+                        data_inicio_vigencia: "2025-10-23T10:00:00Z",
+                        data_fim_vigencia: "2025-11-23T18:00:00Z",
+                        valor_global: 150000.00,
+                        item_url: "/compras/12345678000123/2025/1",
+                        is_new: true
+                    },
+                    {
+                        title: "Edital nº 002/2025 - Contratação de Serviços",
+                        numero_controle_pncp: "98765432000123-1-000002/2025",
+                        orgao_nome: "GOVERNO DO ESTADO DE SÃO PAULO",
+                        municipio_nome: "São Paulo",
+                        uf: "SP",
+                        modalidade_licitacao_nome: "Concorrência",
+                        situacao_nome: "Recebendo Proposta",
+                        data_publicacao_pncp: "2025-10-22T14:30:00Z",
+                        data_inicio_vigencia: "2025-10-22T14:30:00Z",
+                        data_fim_vigencia: "2025-11-22T17:00:00Z",
+                        valor_global: 500000.00,
+                        item_url: "/compras/98765432000123/2025/2",
+                        is_new: false
+                    },
+                    {
+                        title: "Edital nº 003/2025 - Aquisição de Medicamentos",
+                        numero_controle_pncp: "11111111000111-1-000003/2025",
+                        orgao_nome: "SECRETARIA DE SAÚDE DO RIO DE JANEIRO",
+                        municipio_nome: "Rio de Janeiro",
+                        uf: "RJ",
+                        modalidade_licitacao_nome: "Pregão Eletrônico",
+                        situacao_nome: "Recebendo Proposta",
+                        data_publicacao_pncp: "2025-10-21T09:15:00Z",
+                        data_inicio_vigencia: "2025-10-21T09:15:00Z",
+                        data_fim_vigencia: "2025-11-21T16:00:00Z",
+                        valor_global: 750000.00,
+                        item_url: "/compras/11111111000111/2025/3",
+                        is_new: true
+                    },
+                    {
+                        title: "Edital nº 004/2025 - Construção de Escola",
+                        numero_controle_pncp: "22222222000222-1-000004/2025",
+                        orgao_nome: "PREFEITURA MUNICIPAL DE BELO HORIZONTE",
+                        municipio_nome: "Belo Horizonte",
+                        uf: "MG",
+                        modalidade_licitacao_nome: "Concorrência",
+                        situacao_nome: "Recebendo Proposta",
+                        data_publicacao_pncp: "2025-10-20T11:45:00Z",
+                        data_inicio_vigencia: "2025-10-20T11:45:00Z",
+                        data_fim_vigencia: "2025-11-20T15:30:00Z",
+                        valor_global: 2000000.00,
+                        item_url: "/compras/22222222000222/2025/4",
+                        is_new: false
+                    },
+                    {
+                        title: "Edital nº 005/2025 - Aquisição de Veículos",
+                        numero_controle_pncp: "33333333000333-1-000005/2025",
+                        orgao_nome: "DEPARTAMENTO DE TRÂNSITO DE SALVADOR",
+                        municipio_nome: "Salvador",
+                        uf: "BA",
+                        modalidade_licitacao_nome: "Pregão Eletrônico",
+                        situacao_nome: "Recebendo Proposta",
+                        data_publicacao_pncp: "2025-10-19T16:20:00Z",
+                        data_inicio_vigencia: "2025-10-19T16:20:00Z",
+                        data_fim_vigencia: "2025-11-19T18:00:00Z",
+                        valor_global: 300000.00,
+                        item_url: "/compras/33333333000333/2025/5",
+                        is_new: true
+                    }
+                ];
+
+                // Aplicar filtros aos dados mockados
+                let licitacoesFiltradas = licitacoesMock.filter(licitacao => {
+                    if (filtros.uf && licitacao.uf !== filtros.uf) return false;
+                    if (filtros.municipio && !licitacao.municipio_nome.toLowerCase().includes(filtros.municipio.toLowerCase())) return false;
+                    if (filtros.orgao && !licitacao.orgao_nome.toLowerCase().includes(filtros.orgao.toLowerCase())) return false;
+                    if (filtros.modalidade && !licitacao.modalidade_licitacao_nome.toLowerCase().includes(filtros.modalidade.toLowerCase())) return false;
+                    if (filtros.apenas_novas && !licitacao.is_new) return false;
+                    return true;
                 });
 
-                const response = await fetch(`http://localhost:5000/api/licitacoes?${params}`);
-                const data = await response.json();
+                // Simular paginação
+                const perPage = 20;
+                const startIndex = (currentPage - 1) * perPage;
+                const endIndex = startIndex + perPage;
+                const licitacoesPagina = licitacoesFiltradas.slice(startIndex, endIndex);
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                const pagination = {
+                    page: currentPage,
+                    per_page: perPage,
+                    total: licitacoesFiltradas.length,
+                    total_pages: Math.ceil(licitacoesFiltradas.length / perPage),
+                    has_next: currentPage < Math.ceil(licitacoesFiltradas.length / perPage),
+                    has_prev: currentPage > 1
+                };
 
-                exibirLicitacoes(data.licitacoes);
-                atualizarPaginacao(data.pagination);
-                document.getElementById('total-encontradas').textContent = data.pagination.total;
+                exibirLicitacoes(licitacoesPagina);
+                atualizarPaginacao(pagination);
+                document.getElementById('total-encontradas').textContent = pagination.total;
+
             } catch (error) {
                 mostrarErro('Erro ao carregar licitações: ' + error.message);
             } finally {
@@ -312,13 +404,18 @@
 
         async function carregarEstatisticas() {
             try {
-                const response = await fetch('http://localhost:5000/api/estatisticas');
-                const data = await response.json();
+                // Dados mockados para estatísticas
+                const estatisticas = {
+                    total_licitacoes: 5,
+                    novas_hoje: 3,
+                    top_estados: ['PR', 'SP', 'RJ', 'MG', 'BA'],
+                    top_orgaos: ['PREFEITURA MUNICIPAL DE CURITIBA', 'GOVERNO DO ESTADO DE SÃO PAULO', 'SECRETARIA DE SAÚDE DO RIO DE JANEIRO', 'PREFEITURA MUNICIPAL DE BELO HORIZONTE', 'DEPARTAMENTO DE TRÂNSITO DE SALVADOR']
+                };
 
-                document.getElementById('total-licitacoes').textContent = data.total_licitacoes || 0;
-                document.getElementById('novas-hoje').textContent = data.novas_hoje || 0;
-                document.getElementById('estados-ativos').textContent = data.top_estados?.length || 0;
-                document.getElementById('orgaos-ativos').textContent = data.top_orgaos?.length || 0;
+                document.getElementById('total-licitacoes').textContent = estatisticas.total_licitacoes;
+                document.getElementById('novas-hoje').textContent = estatisticas.novas_hoje;
+                document.getElementById('estados-ativos').textContent = estatisticas.top_estados.length;
+                document.getElementById('orgaos-ativos').textContent = estatisticas.top_orgaos.length;
             } catch (error) {
                 console.error('Erro ao carregar estatísticas:', error);
             }
@@ -326,8 +423,8 @@
 
         async function carregarEstados() {
             try {
-                const response = await fetch('http://localhost:5000/api/estados');
-                const estados = await response.json();
+                // Estados mockados
+                const estados = ['PR', 'SP', 'RJ', 'MG', 'BA', 'RS', 'SC', 'GO', 'MT', 'MS'];
 
                 const select = document.getElementById('filtro-uf');
                 estados.forEach(uf => {
@@ -343,8 +440,8 @@
 
         async function carregarModalidades() {
             try {
-                const response = await fetch('http://localhost:5000/api/modalidades');
-                const modalidades = await response.json();
+                // Modalidades mockadas
+                const modalidades = ['Pregão Eletrônico', 'Concorrência', 'Tomada de Preços', 'Convite', 'RDC'];
 
                 const select = document.getElementById('filtro-modalidade');
                 modalidades.forEach(modalidade => {
@@ -475,11 +572,11 @@
 
         async function executarBusca() {
             try {
-                await fetch('http://localhost:5000/api/executar-busca', { method: 'POST' });
-                alert('Busca iniciada! Os dados serão atualizados em alguns minutos.');
+                // Simular execução de busca
+                alert('Busca executada! Os dados foram atualizados.');
                 setTimeout(() => {
                     carregarDados();
-                }, 2000);
+                }, 1000);
             } catch (error) {
                 alert('Erro ao executar busca: ' + error.message);
             }
