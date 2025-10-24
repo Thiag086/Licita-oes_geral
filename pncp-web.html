@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNCP - Portal de Licitações</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+            color: #2c3e50 !important;
+        }
+        .card-licitacao {
+            transition: transform 0.2s;
+            border-left: 4px solid #3498db;
+        }
+        .card-licitacao:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .card-licitacao.nova {
+            border-left-color: #e74c3c;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .stats-card.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stats-card.info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+        .valor-licitacao {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .badge-nova {
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .pagination {
+            justify-content: center;
+        }
+        .btn-refresh {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-gavel me-2"></i>
+                PNCP - Portal de Licitações
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Atualizado em tempo real
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Dashboard -->
+        <div class="row mb-4 mt-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-contract fa-2x mb-2"></i>
+                        <h4 id="total-licitacoes">0</h4>
+                        <p class="mb-0">Total de Licitações</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                        <h4 id="novas-hoje">0</h4>
+                        <p class="mb-0">Novas Hoje</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card warning">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                        <h4 id="estados-ativos">0</h4>
+                        <p class="mb-0">Estados Ativos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-building fa-2x mb-2"></i>
+                        <h4 id="orgaos-ativos">0</h4>
+                        <p class="mb-0">Órgãos Ativos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-2">
+                    <label class="form-label">Estado (UF)</label>
+                    <select class="form-select" id="filtro-uf">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Município</label>
+                    <input type="text" class="form-control" id="filtro-municipio" placeholder="Digite o município">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Órgão</label>
+                    <input type="text" class="form-control" id="filtro-orgao" placeholder="Digite o órgão">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Modalidade</label>
+                    <select class="form-select" id="filtro-modalidade">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="filtro-data-inicio">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="filtro-data-fim">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filtro-apenas-novas">
+                        <label class="form-check-label" for="filtro-apenas-novas">
+                            Apenas licitações novas
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm mt-2" onclick="limparFiltros()">
+                        <i class="fas fa-times me-1"></i>
+                        Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Licitações -->
+        <div id="loading" class="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+            <p class="mt-3">Carregando licitações...</p>
+        </div>
+
+        <div id="error" class="alert alert-danger" style="display: none;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="error-message"></span>
+        </div>
+
+        <div id="licitacoes-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>
+                    <i class="fas fa-list me-2"></i>
+                    Licitações Encontradas
+                    <span class="badge bg-primary ms-2" id="total-encontradas">0</span>
+                </h4>
+            </div>
+            <div id="licitacoes-grid" class="row">
+                <!-- Licitações serão carregadas aqui -->
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        <nav id="paginacao" class="mt-4" style="display: none;">
+            <ul class="pagination">
+                <!-- Paginação será gerada aqui -->
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Botão de Refresh -->
+    <button class="btn btn-primary btn-refresh rounded-circle" onclick="executarBusca()" title="Executar nova busca">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variáveis globais
+        let currentPage = 1;
+        let totalPages = 1;
+        let filtros = {
+            uf: '',
+            municipio: '',
+            orgao: '',
+            modalidade: '',
+            data_inicio: '',
+            data_fim: '',
+            apenas_novas: false
+        };
+
+        // Carregar dados iniciais
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDados();
+            configurarEventos();
+        });
+
+        function configurarEventos() {
+            // Eventos dos filtros
+            document.getElementById('filtro-uf').addEventListener('change', function() {
+                filtros.uf = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-municipio').addEventListener('input', function() {
+                filtros.municipio = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-orgao').addEventListener('input', function() {
+                filtros.orgao = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-modalidade').addEventListener('change', function() {
+                filtros.modalidade = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-data-inicio').addEventListener('change', function() {
+                filtros.data_inicio = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-data-fim').addEventListener('change', function() {
+                filtros.data_fim = this.value;
+                aplicarFiltros();
+            });
+
+            document.getElementById('filtro-apenas-novas').addEventListener('change', function() {
+                filtros.apenas_novas = this.checked;
+                aplicarFiltros();
+            });
+        }
+
+        async function carregarDados() {
+            try {
+                await Promise.all([
+                    carregarLicitacoes(),
+                    carregarEstatisticas(),
+                    carregarEstados(),
+                    carregarModalidades()
+                ]);
+            } catch (error) {
+                mostrarErro('Erro ao carregar dados: ' + error.message);
+            }
+        }
+
+        async function carregarLicitacoes() {
+            mostrarLoading(true);
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    per_page: 20,
+                    ...Object.fromEntries(Object.entries(filtros).filter(([_, v]) => v))
+                });
+
+                const response = await fetch(`http://localhost:5000/api/licitacoes?${params}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                exibirLicitacoes(data.licitacoes);
+                atualizarPaginacao(data.pagination);
+                document.getElementById('total-encontradas').textContent = data.pagination.total;
+            } catch (error) {
+                mostrarErro('Erro ao carregar licitações: ' + error.message);
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function carregarEstatisticas() {
+            try {
+                const response = await fetch('http://localhost:5000/api/estatisticas');
+                const data = await response.json();
+
+                document.getElementById('total-licitacoes').textContent = data.total_licitacoes || 0;
+                document.getElementById('novas-hoje').textContent = data.novas_hoje || 0;
+                document.getElementById('estados-ativos').textContent = data.top_estados?.length || 0;
+                document.getElementById('orgaos-ativos').textContent = data.top_orgaos?.length || 0;
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        async function carregarEstados() {
+            try {
+                const response = await fetch('http://localhost:5000/api/estados');
+                const estados = await response.json();
+
+                const select = document.getElementById('filtro-uf');
+                estados.forEach(uf => {
+                    const option = document.createElement('option');
+                    option.value = uf;
+                    option.textContent = uf;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar estados:', error);
+            }
+        }
+
+        async function carregarModalidades() {
+            try {
+                const response = await fetch('http://localhost:5000/api/modalidades');
+                const modalidades = await response.json();
+
+                const select = document.getElementById('filtro-modalidade');
+                modalidades.forEach(modalidade => {
+                    const option = document.createElement('option');
+                    option.value = modalidade;
+                    option.textContent = modalidade;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar modalidades:', error);
+            }
+        }
+
+        function exibirLicitacoes(licitacoes) {
+            const container = document.getElementById('licitacoes-grid');
+            container.innerHTML = '';
+
+            licitacoes.forEach(licitacao => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+
+                const valor = formatarValor(licitacao.valor_global);
+                const dataFim = formatarData(licitacao.data_fim_vigencia);
+                const isNova = licitacao.is_new ? 'nova' : '';
+
+                col.innerHTML = `
+                    <div class="card card-licitacao h-100 ${isNova}">
+                        <div class="card-body">
+                            ${licitacao.is_new ? '<span class="badge badge-nova mb-2"><i class="fas fa-star me-1"></i>NOVA</span>' : ''}
+                            <h6 class="card-title">${licitacao.title}</h6>
+                            <p class="card-text">
+                                <strong>Órgão:</strong> ${licitacao.orgao_nome || 'N/A'}<br/>
+                                <strong>Local:</strong> ${licitacao.municipio_nome || 'N/A'}, ${licitacao.uf || 'N/A'}<br/>
+                                <strong>Modalidade:</strong> ${licitacao.modalidade_licitacao_nome || 'N/A'}<br/>
+                                <strong>Valor:</strong> <span class="valor-licitacao">${valor}</span><br/>
+                                <strong>Data Fim:</strong> ${dataFim}
+                            </p>
+                            <a href="https://pncp.gov.br${licitacao.item_url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>
+                                Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(col);
+            });
+        }
+
+        function atualizarPaginacao(pagination) {
+            totalPages = pagination.total_pages;
+            const nav = document.getElementById('paginacao');
+            
+            if (totalPages <= 1) {
+                nav.style.display = 'none';
+                return;
+            }
+
+            nav.style.display = 'block';
+            const ul = nav.querySelector('.pagination');
+            ul.innerHTML = '';
+
+            // Botão anterior
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${!pagination.has_prev ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+                <button class="page-link" ${!pagination.has_prev ? 'disabled' : ''} onclick="mudarPagina(${currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+            ul.appendChild(prevLi);
+
+            // Páginas
+            const startPage = Math.max(1, Math.min(totalPages - 4, currentPage - 2));
+            const endPage = Math.min(totalPages, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<button class="page-link" onclick="mudarPagina(${i})">${i}</button>`;
+                ul.appendChild(li);
+            }
+
+            // Botão próximo
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${!pagination.has_next ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+                <button class="page-link" ${!pagination.has_next ? 'disabled' : ''} onclick="mudarPagina(${currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+            ul.appendChild(nextLi);
+        }
+
+        function mudarPagina(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                carregarLicitacoes();
+            }
+        }
+
+        function aplicarFiltros() {
+            currentPage = 1;
+            carregarLicitacoes();
+        }
+
+        function limparFiltros() {
+            filtros = {
+                uf: '',
+                municipio: '',
+                orgao: '',
+                modalidade: '',
+                data_inicio: '',
+                data_fim: '',
+                apenas_novas: false
+            };
+
+            document.getElementById('filtro-uf').value = '';
+            document.getElementById('filtro-municipio').value = '';
+            document.getElementById('filtro-orgao').value = '';
+            document.getElementById('filtro-modalidade').value = '';
+            document.getElementById('filtro-data-inicio').value = '';
+            document.getElementById('filtro-data-fim').value = '';
+            document.getElementById('filtro-apenas-novas').checked = false;
+
+            aplicarFiltros();
+        }
+
+        async function executarBusca() {
+            try {
+                await fetch('http://localhost:5000/api/executar-busca', { method: 'POST' });
+                alert('Busca iniciada! Os dados serão atualizados em alguns minutos.');
+                setTimeout(() => {
+                    carregarDados();
+                }, 2000);
+            } catch (error) {
+                alert('Erro ao executar busca: ' + error.message);
+            }
+        }
+
+        function mostrarLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('licitacoes-container').style.display = show ? 'none' : 'block';
+        }
+
+        function mostrarErro(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('licitacoes-container').style.display = 'none';
+        }
+
+        function formatarValor(valor) {
+            if (!valor || valor === 0) return 'N/A';
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+
+        function formatarData(data) {
+            if (!data) return 'N/A';
+            return new Date(data).toLocaleDateString('pt-BR');
+        }
+    </script>
+</body>
+</html>
